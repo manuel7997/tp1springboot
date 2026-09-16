@@ -1,9 +1,15 @@
 # TP1 · Spring Boot, API REST y arquitectura en capas
 
-Punto de partida del práctico. Está armada la **configuración e
-infraestructura transversal** que van a necesitar sin importar cómo
-resuelvan cada consigna; lo que falta —el diseño y la lógica propia de cada
-recurso— se va a ir sumando a esta rama a medida que avance la cursada.
+Introducción a Spring mediante una API con controladores, servicios, DTOs,
+validación, manejo de errores y documentación con Swagger/OpenAPI.
+
+La aplicación expone dos grupos de endpoints:
+
+1. Catálogo de productos (`/api/productos`) — de solo lectura. El
+   backend consume la API pública externa [DummyJSON](https://dummyjson.com/products)
+   y expone su propia versión, con su propio contrato JSON.
+2. Favoritos (`/api/favoritos`) — un recurso propio, con CRUD
+   completo, guardado en memoria (sin persistencia real, sin JPA).
 
 ## Cómo levantar el proyecto
 
@@ -22,43 +28,86 @@ Cuando el log muestre `Started DemoApplication`, la app queda escuchando en
 
 Para compilar y correr los tests: `./mvnw test` (o `.\mvnw.cmd test`).
 
-## Endpoints disponibles hoy
+## Documentación / Swagger UI
 
-| Método | Path | Qué hace |
-|---|---|---|
-| GET | `/health` | Chequeo de salud básico |
-| GET | `/ping` | Devuelve `pong`, sin JSON — otro chequeo trivial |
+Con la app corriendo, entrar a:
 
 ```
-curl http://localhost:8080/health
-curl http://localhost:8080/ping
+http://localhost:8080/swagger-ui.html
 ```
 
-## Qué ya está armado
+Ahí se ven los dos grupos de endpoints (**Productos** y **Favoritos**),
+cada uno documentado con `@Tag`/`@Operation`, y se puede probar cada
+operación con "Try it out" → "Execute" sin salir del navegador.
+
+## Endpoints disponibles
+
+| Recurso | Método | Path | Qué hace | Código de éxito |
+|---|---|---|---|---|
+| Salud | GET | `/health` | Chequeo de salud básico | 200 |
+| Salud | GET | `/ping` | Devuelve `pong`, sin JSON | 200 |
+| Productos | GET | `/api/productos` | Lista el catálogo completo (consumido de DummyJSON, mapeado a `ProductoDTO`) | 200 |
+| Productos | GET | `/api/productos/{id}` | Devuelve un producto puntual; 404 si no existe | 200 / 404 |
+| Favoritos | POST | `/api/favoritos` | Crea un favorito | 201 |
+| Favoritos | GET | `/api/favoritos` | Lista todos los favoritos | 200 |
+| Favoritos | GET | `/api/favoritos/{id}` | Devuelve un favorito puntual; 404 si no existe | 200 / 404 |
+| Favoritos | PUT | `/api/favoritos/{id}` | Actualiza un favorito existente; 404 si no existe | 200 / 404 |
+| Favoritos | DELETE | `/api/favoritos/{id}` | Elimina un favorito; 404 si no existe | 204 / 404 |
+
+Ejemplos con curl:
+
+```
+curl http://localhost:8080/api/productos
+curl http://localhost:8080/api/productos/1
+
+curl -X POST http://localhost:8080/api/favoritos \
+  -H "Content-Type: application/json" \
+  -d '{"productoId":1,"nombreProducto":"Essence Mascara Lash Princess","comentario":"me gustan"}'
+
+curl http://localhost:8080/api/favoritos
+```
+
+## Manejo de errores
+
+Toda la API responde errores en un formato uniforme (`ProblemDetail`,
+RFC 7807), a través de un `@RestControllerAdvice` central:
+
+- Recurso inexistente (producto o favorito) → `404 Not Found`.
+- Datos de entrada inválidos (Bean Validation en el DTO de favoritos) →
+  `400 Bad Request`, con el detalle de qué campo falló y por qué.
+- Falla al consumir la API externa DummyJSON (caída o timeout) →
+  `502 Bad Gateway`.
+
+## Qué está armado
 
 - **`config/RestClientConfig`**: bean de `RestClient` apuntado a la
   `base-url` de DummyJSON (`app.dummyjson.base-url` en
-  `application.properties`). Listo para inyectar.
+  `application.properties`).
 - **`config/OpenApiConfig`**: metadata general de Swagger UI.
-- **`client/dummyjson/DummyJsonProducto` y `DummyJsonProductosResponse`**:
-  la forma exacta del JSON que devuelve `https://dummyjson.com/products` —
-  para no tener que adivinar los nombres de campo del proveedor externo.
-- **`exception/GlobalExceptionHandler`** (+ `RecursoNoEncontradoException` y
-  `ServicioExternoException`): manejo uniforme de errores para toda la API
-  (`ProblemDetail`). Ya contempla 404 y errores de un servicio externo —
-  se reusa tal cual para cualquier recurso nuevo que se agregue.
+- **`client/dummyjson/DummyJsonClient`**: cliente propio que usa el
+  `RestClient` para llamar a `/products` y `/products/{id}`, traduciendo
+  errores de red/HTTP a `RecursoNoEncontradoException` /
+  `ServicioExternoException`.
+- **`dto/producto/ProductoDTO`** + **`service/ProductoService`** +
+  **`controller/ProductoController`**: catálogo de productos, con su
+  propio contrato JSON (no expone el JSON externo tal cual).
+- **`model/Favorito`**: entidad de dominio (id, referencia al producto,
+  nota personal, fecha en la que se agregó).
+- **`repository/FavoritoRepository`** (interfaz) +
+  **`repository/FavoritoRepositoryEnMemoria`** (implementación en
+  memoria con una colección, sin JPA).
+- **`dto/favorito/FavoritoRequestDTO`** (entrada, con Bean Validation) y
+  **`dto/favorito/FavoritoDTO`** (salida).
+- **`service/FavoritoService`** + **`controller/FavoritoController`**:
+  CRUD completo de favoritos.
+- **`exception/GlobalExceptionHandler`** (+ `RecursoNoEncontradoException`
+  y `ServicioExternoException`): manejo uniforme de errores para toda
+  la API.
 
-## Qué falta (eso es la consigna)
+## Evidencia
 
-- Un cliente propio (`DummyJsonClient` o como se llame) que use el
-  `RestClient` ya configurado para llamar a `/products` y `/products/{id}`,
-  manejando los errores de red/HTTP con las excepciones ya definidas.
-- Un DTO propio para el producto (no el JSON externo tal cual) y el
-  service/controller de `/api/productos`.
-- Todo el recurso de favoritos: entidad, repository en memoria, DTOs,
-  service y controller CRUD.
-- Anotar los controllers con `@Tag`/`@Operation` para que Swagger UI los
-  documente.
+Capturas de casos de éxito y de error probados en Swagger UI para cada
+recurso están en la carpeta [`EVIDENCIA/`](./EVIDENCIA).
 
 ## Dependencias
 
