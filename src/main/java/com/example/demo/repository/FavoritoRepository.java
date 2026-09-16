@@ -1,46 +1,25 @@
 package com.example.demo.repository;
 
 import com.example.demo.model.Favorito;
-import org.springframework.stereotype.Repository;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Almacenamiento en memoria de favoritos (no hay base de datos para este
- * recurso). Los datos se pierden al reiniciar la aplicación.
+ * Contrato del almacenamiento de favoritos. La implementación en memoria
+ * es {@link FavoritoRepositoryEnMemoria}; separar la interfaz permite
+ * cambiar de implementación (por ejemplo a una con base de datos en el
+ * TP2) sin tocar FavoritoService.
  */
-@Repository
-public class FavoritoRepository {
+public interface FavoritoRepository {
 
-    private final Map<Long, Favorito> favoritos = new ConcurrentHashMap<>();
-    private final AtomicLong secuencia = new AtomicLong(0);
+    List<Favorito> buscarTodos();
 
-    public List<Favorito> buscarTodos() {
-        return new ArrayList<>(favoritos.values());
-    }
+    Optional<Favorito> buscarPorId(Long id);
 
-    public Optional<Favorito> buscarPorId(Long id) {
-        return Optional.ofNullable(favoritos.get(id));
-    }
+    boolean existePorId(Long id);
 
-    public boolean existePorId(Long id) {
-        return favoritos.containsKey(id);
-    }
+    Favorito guardar(Favorito favorito);
 
-    public Favorito guardar(Favorito favorito) {
-        if (favorito.getId() == null) {
-            favorito.setId(secuencia.incrementAndGet());
-        }
-        favoritos.put(favorito.getId(), favorito);
-        return favorito;
-    }
-
-    public void eliminarPorId(Long id) {
-        favoritos.remove(id);
-    }
+    void eliminarPorId(Long id);
 }

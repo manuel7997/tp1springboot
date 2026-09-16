@@ -7,6 +7,7 @@ import com.example.demo.model.Favorito;
 import com.example.demo.repository.FavoritoRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -31,15 +32,24 @@ public class FavoritoService {
     }
 
     public FavoritoDTO crear(FavoritoRequestDTO request) {
-        Favorito favorito = new Favorito(null, request.productoId(), request.nombreProducto(), request.comentario());
+        Favorito favorito = new Favorito(
+                null,
+                request.productoId(),
+                request.nombreProducto(),
+                request.comentario(),
+                LocalDateTime.now());
         return aDTO(favoritoRepository.guardar(favorito));
     }
 
     public FavoritoDTO actualizar(Long id, FavoritoRequestDTO request) {
-        if (!favoritoRepository.existePorId(id)) {
-            throw new RecursoNoEncontradoException("No existe un favorito con id " + id);
-        }
-        Favorito favorito = new Favorito(id, request.productoId(), request.nombreProducto(), request.comentario());
+        Favorito existente = favoritoRepository.buscarPorId(id)
+                .orElseThrow(() -> new RecursoNoEncontradoException("No existe un favorito con id " + id));
+        Favorito favorito = new Favorito(
+                id,
+                request.productoId(),
+                request.nombreProducto(),
+                request.comentario(),
+                existente.getFechaAgregado());
         return aDTO(favoritoRepository.guardar(favorito));
     }
 
@@ -55,7 +65,8 @@ public class FavoritoService {
                 favorito.getId(),
                 favorito.getProductoId(),
                 favorito.getNombreProducto(),
-                favorito.getComentario()
+                favorito.getComentario(),
+                favorito.getFechaAgregado()
         );
     }
 }

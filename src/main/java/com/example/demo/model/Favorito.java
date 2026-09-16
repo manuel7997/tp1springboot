@@ -1,5 +1,7 @@
 package com.example.demo.model;
 
+import java.time.LocalDateTime;
+
 /**
  * Entidad interna de favorito. No tiene anotaciones de JPA a propósito:
  * se persiste en memoria a través de FavoritoRepository, no en una base
@@ -11,15 +13,17 @@ public class Favorito {
     private Long productoId;
     private String nombreProducto;
     private String comentario;
+    private LocalDateTime fechaAgregado;
 
     public Favorito() {
     }
 
-    public Favorito(Long id, Long productoId, String nombreProducto, String comentario) {
+    public Favorito(Long id, Long productoId, String nombreProducto, String comentario, LocalDateTime fechaAgregado) {
         this.id = id;
         this.productoId = productoId;
         this.nombreProducto = nombreProducto;
         this.comentario = comentario;
+        this.fechaAgregado = fechaAgregado;
     }
 
     public Long getId() {
@@ -52,5 +56,13 @@ public class Favorito {
 
     public void setComentario(String comentario) {
         this.comentario = comentario;
+    }
+
+    public LocalDateTime getFechaAgregado() {
+        return fechaAgregado;
+    }
+
+    public void setFechaAgregado(LocalDateTime fechaAgregado) {
+        this.fechaAgregado = fechaAgregado;
     }
 }
