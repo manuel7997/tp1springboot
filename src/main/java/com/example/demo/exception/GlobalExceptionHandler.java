@@ -1,5 +1,6 @@
 package com.example.demo.exception;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.validation.FieldError;
@@ -27,6 +28,29 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(RecursoNoEncontradoException.class)
     public ProblemDetail handleNoEncontrado(RecursoNoEncontradoException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    @ExceptionHandler(ConflictoException.class)
+    public ProblemDetail handleConflicto(ConflictoException ex) {
+        ProblemDetail problema = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+        problema.setTitle("Conflicto con el estado actual");
+        return problema;
+    }
+
+    /** Red de seguridad: si la base rechaza una operación por una restricción (FK, NOT NULL), es un conflicto, no un 500. */
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ProblemDetail handleIntegridad(DataIntegrityViolationException ex) {
+        ProblemDetail problema = ProblemDetail.forStatusAndDetail(
+                HttpStatus.CONFLICT, "La operación viola una restricción de integridad de la base de datos");
+        problema.setTitle("Conflicto de integridad");
+        return problema;
+    }
+
+    @ExceptionHandler(SolicitudInvalidaException.class)
+    public ProblemDetail handleSolicitudInvalida(SolicitudInvalidaException ex) {
+        ProblemDetail problema = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
+        problema.setTitle("Solicitud inválida");
+        return problema;
     }
 
     @ExceptionHandler(ServicioExternoException.class)

@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: tp2-postgres
+    environment:
+      POSTGRES_DB: ${DB_NAME:-tp2}
+      POSTGRES_USER: ${DB_USER:-tp2}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-tp2}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - tp2-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-tp2} -d ${DB_NAME:-tp2}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  tp2-pgdata:

@@ -21,7 +21,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/favoritos")
-@Tag(name = "Favoritos", description = "CRUD de productos favoritos, guardados en memoria")
+@Tag(name = "Favoritos", description = "CRUD de productos favoritos, guardados en PostgreSQL; cada favorito pertenece a una lista")
 public class FavoritoController {
 
     private final FavoritoService favoritoService;
@@ -31,32 +31,32 @@ public class FavoritoController {
     }
 
     @GetMapping
-    @Operation(summary = "Listar favoritos")
+    @Operation(summary = "Listar favoritos", description = "Devuelve todos los favoritos guardados, de cualquier lista.")
     public List<FavoritoDTO> listar() {
         return favoritoService.listar();
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Obtener un favorito por id")
+    @Operation(summary = "Obtener un favorito por id", description = "404 si el favorito no existe.")
     public FavoritoDTO obtenerPorId(@PathVariable Long id) {
         return favoritoService.obtenerPorId(id);
     }
 
     @PostMapping
-    @Operation(summary = "Agregar un favorito")
+    @Operation(summary = "Agregar un favorito", description = "Crea un favorito dentro de una lista. 400 si faltan datos obligatorios; 404 si la lista indicada no existe.")
     public ResponseEntity<FavoritoDTO> crear(@Valid @RequestBody FavoritoRequestDTO request) {
         FavoritoDTO creado = favoritoService.crear(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(creado);
     }
 
     @PutMapping("/{id}")
-    @Operation(summary = "Actualizar un favorito existente")
+    @Operation(summary = "Actualizar un favorito existente", description = "404 si el favorito o la lista indicada no existen; 400 si faltan datos obligatorios.")
     public FavoritoDTO actualizar(@PathVariable Long id, @Valid @RequestBody FavoritoRequestDTO request) {
         return favoritoService.actualizar(id, request);
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "Eliminar un favorito")
+    @Operation(summary = "Eliminar un favorito", description = "204 si se eliminó; 404 si no existe.")
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         favoritoService.eliminar(id);
         return ResponseEntity.noContent().build();

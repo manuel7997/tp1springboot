@@ -6,10 +6,11 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Contrato del almacenamiento de favoritos. La implementación en memoria
- * es {@link FavoritoRepositoryEnMemoria}; separar la interfaz permite
- * cambiar de implementación (por ejemplo a una con base de datos en el
- * TP2) sin tocar FavoritoService.
+ * Puerto (contrato) del almacenamiento de favoritos. El dominio y el
+ * service solo conocen esta interfaz; la implementación concreta es el
+ * adapter {@code FavoritoRepositoryAdapter} (JPA + PostgreSQL). En el TP1
+ * la implementación era una colección en memoria y el service no se enteró
+ * del cambio.
  */
 public interface FavoritoRepository {
 
@@ -22,4 +23,8 @@ public interface FavoritoRepository {
     Favorito guardar(Favorito favorito);
 
     void eliminarPorId(Long id);
+
+    List<Favorito> buscarPorListaId(Long listaId);
+
+    boolean existePorListaId(Long listaId);
 }
