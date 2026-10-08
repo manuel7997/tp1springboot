@@ -1,0 +1,168 @@
+@base = http://localhost:8080
+
+### ---------- LISTAS ----------
+
+### Éxito: crear lista (201)
+POST {{base}}/api/listas
+Content-Type: application/json
+
+{ "nombre": "Regalos" }
+
+### Éxito: crear segunda lista (201)
+POST {{base}}/api/listas
+Content-Type: application/json
+
+{ "nombre": "Para comprar en oferta" }
+
+### Error: nombre vacío (400)
+POST {{base}}/api/listas
+Content-Type: application/json
+
+{ "nombre": "" }
+
+### Éxito: listar listas (200)
+GET {{base}}/api/listas
+
+### Éxito: obtener una lista (200)
+GET {{base}}/api/listas/1
+
+### Error: lista inexistente (404)
+GET {{base}}/api/listas/9999
+
+### ---------- FAVORITOS ----------
+
+### Éxito: crear favorito en la lista 1 (201)
+POST {{base}}/api/favoritos
+Content-Type: application/json
+
+{ "productoId": 1, "nombreProducto": "Essence Mascara Lash Princess", "comentario": "me gustan", "listaId": 1 }
+
+### Éxito: crear otro favorito en la lista 1 (201)
+POST {{base}}/api/favoritos
+Content-Type: application/json
+
+{ "productoId": 2, "nombreProducto": "Eyeshadow Palette with Mirror", "comentario": "para regalar", "listaId": 1 }
+
+### Error: falta listaId (400)
+POST {{base}}/api/favoritos
+Content-Type: application/json
+
+{ "productoId": 3, "nombreProducto": "Powder Canister" }
+
+### Error: lista inexistente (404)
+POST {{base}}/api/favoritos
+Content-Type: application/json
+
+{ "productoId": 3, "nombreProducto": "Powder Canister", "listaId": 9999 }
+
+### Éxito: listar favoritos (200)
+GET {{base}}/api/favoritos
+
+### Éxito: favoritos de la lista 1 (200)
+GET {{base}}/api/listas/1/favoritos
+
+### Error: favoritos de una lista inexistente (404)
+GET {{base}}/api/listas/9999/favoritos
+
+### ---------- BORRAR LISTA ----------
+
+### Error: borrar lista con favoritos (409)
+DELETE {{base}}/api/listas/1
+
+### Éxito: borrar lista vacía (204)
+DELETE {{base}}/api/listas/2
+
+### ---------- MOVER FAVORITOS (transaccional) ----------
+
+### Preparación: crear lista destino
+POST {{base}}/api/listas
+Content-Type: application/json
+
+{ "nombre": "Archivo" }
+
+### Error: origen y destino iguales (400)
+POST {{base}}/api/listas/1/mover-favoritos
+Content-Type: application/json
+
+{ "listaDestinoId": 13 }
+
+### Error: lista origen inexistente (404)
+POST {{base}}/api/listas/9999/mover-favoritos
+Content-Type: application/json
+
+{ "listaDestinoId": 1 }
+
+### Error: lista destino inexistente (404)
+POST {{base}}/api/listas/1/mover-favoritos
+Content-Type: application/json
+
+{ "listaDestinoId": 9999 }
+
+### Éxito: mover favoritos de la lista 1 a la lista 3 (200) — ajustar el id de destino al que devolvió "Archivo"
+POST {{base}}/api/listas/1/mover-favoritos
+Content-Type: application/json
+
+{ "listaDestinoId": 13 }
+
+### Verificar: la lista 1 ya no existe (404)
+GET {{base}}/api/listas/1
+
+### Verificar: los favoritos están en la lista destino (200)
+GET {{base}}/api/listas/13/favoritos
+### Datos nuevos 1: lista origen
+POST {{base}}/api/listas
+Content-Type: application/json
+
+{ "nombre": "Origen" }
+
+### Datos nuevos 2: lista destino
+POST {{base}}/api/listas
+Content-Type: application/json
+
+{ "nombre": "Destino" }
+### Datos nuevos 3: favorito en Origen
+POST {{base}}/api/favoritos
+Content-Type: application/json
+
+{ "productoId": 1, "nombreProducto": "Essence Mascara Lash Princess", "comentario": "primero", "listaId": 14 }
+
+### Datos nuevos 4: otro favorito en Origen
+POST {{base}}/api/favoritos
+Content-Type: application/json
+
+{ "productoId": 2, "nombreProducto": "Eyeshadow Palette with Mirror", "comentario": "segundo", "listaId": 14 }
+### Mover de Origen a Destino
+POST {{base}}/api/listas/14/mover-favoritos
+Content-Type: application/json
+
+{ "listaDestinoId": 15 }
+
+### Origen ya no existe (404)
+GET {{base}}/api/listas/14
+
+### Favoritos en Destino (200)
+GET {{base}}/api/listas/15/favoritos
+
+### Persistencia: listar favoritos tras reiniciar (200)
+GET {{base}}/api/favoritos
+
+### Persistencia: listar listas tras reiniciar (200)
+GET {{base}}/api/listas
+### Éxito: actualizar favorito (200)
+PUT {{base}}/api/favoritos/3
+Content-Type: application/json
+
+{ "productoId": 1, "nombreProducto": "Essence Mascara Lash Princess", "comentario": "comentario editado", "listaId": 15 }
+
+### Error: actualizar favorito inexistente (404)
+PUT {{base}}/api/favoritos/9999
+Content-Type: application/json
+
+{ "productoId": 1, "nombreProducto": "Essence Mascara Lash Princess", "comentario": "x", "listaId": 15 }
+
+### Éxito: eliminar favorito (204)
+DELETE {{base}}/api/favoritos/3
+
+### Error: eliminar favorito inexistente (404)
+DELETE {{base}}/api/favoritos/9999
+
